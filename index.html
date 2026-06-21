@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#171320" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#f7f4fb" media="(prefers-color-scheme: light)" />
+<meta name="description" content="Hand a thought to AI and see it differently — reframe it, challenge it, view it from other perspectives, or sharpen it into next steps." />
+<title>Rethink with AI</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --fire1:#FF9656; --fire2:#F14575; --fire3:#9270F4;
+    --bg:#f7f4fb; --bg2:#efeaf7; --panel:#ffffff; --panel2:#faf8fe;
+    --ink:#231e30; --muted:#766d86; --faint:#a79fb6;
+    --line:#e6dff1; --line2:#efe9f8;
+    --accent:#7c4dd6; --accent2:#c2447a; --accent-soft:#f1ecfb;
+    --shadow:0 1px 2px rgba(35,30,48,.04), 0 10px 34px rgba(35,30,48,.07);
+    --font-ui:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    --font-display:'Fraunces',Georgia,serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#171320; --bg2:#1e1829; --panel:#221b30; --panel2:#291f3a;
+      --ink:#efe9f6; --muted:#a99fbb; --faint:#7c7290;
+      --line:#332945; --line2:#3b3050;
+      --accent:#b18cf5; --accent2:#f178a6; --accent-soft:#2a1f3d;
+      --shadow:0 1px 2px rgba(0,0,0,.2), 0 12px 36px rgba(0,0,0,.3);
+    }
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink); min-height:100dvh;
+    font-family:var(--font-ui); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  button { font-family:inherit; cursor:pointer; }
+  textarea { font-family:inherit; color:inherit; }
+  a { color:var(--accent); }
+
+  .wrap { max-width:780px; margin:0 auto; padding:26px 22px 90px; }
+
+  header { display:flex; align-items:center; gap:13px; margin-bottom:8px; }
+  .mark {
+    width:40px; height:40px; border-radius:12px; flex:none;
+    background:linear-gradient(135deg,var(--fire3),var(--fire2) 60%,var(--fire1));
+    display:grid; place-items:center; color:#fff; font-size:20px;
+    box-shadow:0 6px 16px rgba(146,112,244,.34);
+  }
+  header h1 { margin:0; font-family:var(--font-display); font-weight:600; font-size:25px; letter-spacing:-.015em; }
+  header .sub { margin:2px 0 0; color:var(--muted); font-size:13px; }
+  .home-link { margin-left:auto; font-size:13px; color:var(--muted); text-decoration:none; border:1px solid var(--line); padding:7px 12px; border-radius:9px; white-space:nowrap; }
+  .home-link:hover { color:var(--ink); border-color:var(--accent); }
+
+  .from-note { font-size:12.5px; color:var(--muted); background:var(--accent-soft); border:1px solid var(--line2); border-radius:9px; padding:7px 12px; margin:12px 0 0; display:none; }
+
+  .composer { background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:6px 6px 10px; margin-top:16px; }
+  textarea#text {
+    width:100%; border:0; outline:none; background:transparent; resize:vertical;
+    min-height:128px; padding:16px 16px 6px; font-size:16.5px; line-height:1.65;
+  }
+  textarea#text::placeholder { color:var(--faint); }
+  .composer-bar { display:flex; align-items:center; gap:10px; padding:6px 12px 4px; }
+  .count { font-size:12px; color:var(--faint); }
+  .composer-bar .spacer { flex:1; }
+
+  .lenses { display:flex; gap:8px; flex-wrap:wrap; margin:16px 0 4px; }
+  .lens {
+    border:1px solid var(--line); background:var(--panel); color:var(--muted);
+    border-radius:11px; padding:9px 14px; font-size:13.5px; font-weight:500; transition:.14s;
+    display:flex; align-items:center; gap:7px;
+  }
+  .lens:hover { color:var(--ink); border-color:var(--accent); }
+  .lens.on { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 4px 12px rgba(124,77,214,.28); }
+  .lens .lz { font-size:15px; }
+
+  .run-row { display:flex; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+  .run {
+    border:0; border-radius:12px; padding:13px 22px; color:#fff; font-weight:600; font-size:15px;
+    background:linear-gradient(135deg,var(--fire2),var(--fire3));
+    box-shadow:0 6px 18px rgba(146,112,244,.32); transition:transform .12s, box-shadow .2s, opacity .2s;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .run:hover { box-shadow:0 8px 22px rgba(146,112,244,.42); }
+  .run:active { transform:scale(.985); }
+  .run:disabled { opacity:.55; cursor:default; box-shadow:none; }
+  .run-all { background:none; border:0; color:var(--muted); font-size:13px; text-decoration:underline; text-underline-offset:3px; }
+  .run-all:hover { color:var(--accent); }
+
+  /* result tabs */
+  .rtabs { display:flex; gap:4px; margin:26px 0 0; border-bottom:1px solid var(--line); overflow-x:auto; }
+  .rtab {
+    border:0; background:none; color:var(--muted); font-size:13.5px; font-weight:500; padding:10px 13px;
+    border-bottom:2px solid transparent; white-space:nowrap; transition:.14s;
+  }
+  .rtab:hover { color:var(--ink); }
+  .rtab.on { color:var(--accent); border-bottom-color:var(--accent); }
+  .rtab .has { color:#3fae6b; font-size:10px; margin-left:4px; }
+
+  .result { margin-top:20px; }
+  .headline { font-family:var(--font-display); font-size:19px; font-weight:500; line-height:1.4; color:var(--ink); margin-bottom:16px; }
+  .section { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:15px 17px; margin-bottom:11px; box-shadow:var(--shadow); }
+  .section .slabel { font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; font-weight:600; color:var(--accent); margin-bottom:6px; }
+  .section .sbody { font-size:15px; line-height:1.62; white-space:pre-wrap; }
+  .takeaway { border-left:3px solid var(--accent); padding:4px 0 4px 15px; margin:18px 2px; font-family:var(--font-display); font-size:16.5px; font-style:italic; color:var(--ink); }
+  .disclaimer { font-size:12px; color:var(--faint); margin-top:18px; line-height:1.5; border-top:1px dashed var(--line2); padding-top:14px; }
+
+  .skeleton .section { animation:pulse 1.3s ease-in-out infinite; }
+  .sk-line { height:11px; border-radius:6px; background:var(--line2); margin:9px 0; }
+  @keyframes pulse { 0%,100%{ opacity:1 } 50%{ opacity:.5 } }
+
+  .placeholder { text-align:center; color:var(--faint); padding:40px 20px; line-height:1.65; }
+  .placeholder .pm { font-family:var(--font-display); font-size:20px; color:var(--muted); margin-bottom:8px; }
+
+  .errbox { background:var(--accent-soft); border:1px solid var(--line2); border-radius:12px; padding:14px 16px; color:var(--ink); font-size:14px; }
+
+  .privacy { font-size:11.5px; color:var(--faint); text-align:center; margin-top:30px; line-height:1.6; }
+
+  @media (max-width:560px) {
+    header h1 { font-size:22px; }
+    .home-link { padding:6px 9px; }
+    .lens { flex:1; justify-content:center; }
+  }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="mark">↻</div>
+      <div>
+        <h1>Rethink with AI</h1>
+        <div class="sub">Hand it a thought. See it from a new angle.</div>
+      </div>
+      <a class="home-link" id="homeLink" href="https://syahmedu.github.io/my-thoughts/" target="_blank" rel="noopener">My Thoughts ↗</a>
+    </header>
+
+    <div class="from-note" id="fromNote"></div>
+
+    <div class="composer">
+      <textarea id="text" placeholder="What's on your mind? A worry, an idea, an opinion, a decision you're chewing on…"></textarea>
+      <div class="composer-bar">
+        <span class="count" id="count">0 characters</span>
+        <span class="spacer"></span>
+      </div>
+    </div>
+
+    <div class="lenses" id="lenses">
+      <button class="lens on" data-mode="reframe"><span class="lz">🪶</span> Reframe it</button>
+      <button class="lens" data-mode="challenge"><span class="lz">⚖️</span> Challenge it</button>
+      <button class="lens" data-mode="perspectives"><span class="lz">🔭</span> Perspectives</button>
+      <button class="lens" data-mode="sharpen"><span class="lz">✦</span> Sharpen &amp; act</button>
+    </div>
+
+    <div class="run-row">
+      <button class="run" id="runBtn">↻ Rethink this</button>
+      <button class="run-all" id="runAllBtn">or run all four lenses</button>
+    </div>
+
+    <div class="rtabs" id="rtabs" style="display:none;"></div>
+    <div class="result" id="result">
+      <div class="placeholder" id="placeholder">
+        <div class="pm">Write something, pick a lens, and rethink it.</div>
+        <div>Your words are sent to the AI engine only when you press <b>Rethink</b>. Nothing is saved on a server.</div>
+      </div>
+    </div>
+
+    <div class="privacy">
+      Rethink with AI is a thinking aid — not advice, therapy, or fact. Reflections are generated by AI and can be wrong.<br>
+      Your thought is sent to the AI engine for processing only when you ask it to rethink something.
+    </div>
+  </div>
+
+<script>
+"use strict";
+const MY_THOUGHTS_URL = "https://syahmedu.github.io/my-thoughts/";
+
+const MODE_LABEL = { reframe:"Reframe", challenge:"Challenge", perspectives:"Perspectives", sharpen:"Sharpen" };
+const $ = id => document.getElementById(id);
+const els = {
+  text:$("text"), count:$("count"), lenses:$("lenses"),
+  run:$("runBtn"), runAll:$("runAllBtn"),
+  rtabs:$("rtabs"), result:$("result"), placeholder:$("placeholder"),
+  fromNote:$("fromNote"), home:$("homeLink"),
+};
+
+let mode = "reframe";
+let cache = {};        // mode -> result object, keyed to current text
+let cacheText = "";    // the text the cache belongs to
+let busy = false;
+
+els.home.href = MY_THOUGHTS_URL;
+
+// ── Prefill from My Thoughts (?t=base64url JSON {t,title}) ──
+(function prefill() {
+  const p = new URLSearchParams(location.search).get("t");
+  if (!p) return;
+  try {
+    const json = JSON.parse(decodeURIComponent(escape(atob(p.replace(/-/g, "+").replace(/_/g, "/")))));
+    if (json.t) {
+      els.text.value = json.t;
+      if (json.title) { els.fromNote.style.display = "block"; els.fromNote.textContent = "From My Thoughts · “" + json.title + "”"; }
+    }
+  } catch {}
+  history.replaceState(null, "", location.pathname);
+})();
+
+function updateCount() {
+  const n = els.text.value.length;
+  els.count.textContent = n.toLocaleString() + " character" + (n === 1 ? "" : "s");
+}
+updateCount();
+
+els.text.addEventListener("input", () => { updateCount(); if (els.text.value.trim() !== cacheText) { cache = {}; cacheText = ""; } });
+
+els.lenses.addEventListener("click", ev => {
+  const b = ev.target.closest(".lens"); if (!b) return;
+  mode = b.dataset.mode;
+  [...els.lenses.children].forEach(c => c.classList.toggle("on", c === b));
+  if (cache[mode]) renderResult(cache[mode]);
+});
+
+els.run.addEventListener("click", () => run(mode));
+els.runAll.addEventListener("click", runAll);
+
+async function run(m) {
+  const text = els.text.value.trim();
+  if (!text) { els.text.focus(); return; }
+  if (busy) return;
+  if (cacheText === text && cache[m]) { setMode(m); renderResult(cache[m]); return; }
+
+  busy = true; setMode(m); els.run.disabled = true; els.runAll.disabled = true;
+  showSkeleton();
+  try {
+    const r = await fetch("/api/rethink", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, mode: m }),
+    });
+    const data = await r.json();
+    if (!r.ok) { showError(data.message || "Something went wrong."); return; }
+    cacheText = text;
+    cache[m] = data;
+    renderTabs();
+    renderResult(data);
+  } catch {
+    showError("Couldn't reach the AI engine. Check your connection and try again.");
+  } finally {
+    busy = false; els.run.disabled = false; els.runAll.disabled = false;
+  }
+}
+
+async function runAll() {
+  const order = ["reframe", "challenge", "perspectives", "sharpen"];
+  for (const m of order) { if (!(cacheText === els.text.value.trim() && cache[m])) { await run(m); } }
+  setMode(order[0]); if (cache[order[0]]) renderResult(cache[order[0]]);
+}
+
+function setMode(m) {
+  mode = m;
+  [...els.lenses.children].forEach(c => c.classList.toggle("on", c.dataset.mode === m));
+  renderTabs();
+}
+
+function renderTabs() {
+  const modes = ["reframe", "challenge", "perspectives", "sharpen"];
+  if (!Object.keys(cache).length) { els.rtabs.style.display = "none"; return; }
+  els.rtabs.style.display = "flex";
+  els.rtabs.innerHTML = modes.map(m =>
+    `<button class="rtab${m === mode ? " on" : ""}" data-mode="${m}">${MODE_LABEL[m]}${cache[m] ? '<span class="has">●</span>' : ""}</button>`
+  ).join("");
+  [...els.rtabs.children].forEach(t => t.addEventListener("click", () => {
+    const m = t.dataset.mode;
+    if (cache[m]) { setMode(m); renderResult(cache[m]); }
+    else run(m);
+  }));
+}
+
+function showSkeleton() {
+  els.result.innerHTML = `<div class="skeleton">
+    <div class="section"><div class="sk-line" style="width:40%"></div><div class="sk-line"></div><div class="sk-line" style="width:80%"></div></div>
+    <div class="section"><div class="sk-line" style="width:30%"></div><div class="sk-line"></div><div class="sk-line" style="width:70%"></div></div>
+  </div>`;
+}
+
+function showError(msg) {
+  els.result.innerHTML = `<div class="errbox">${esc(msg)}</div>`;
+}
+
+function renderResult(data) {
+  const sections = (data.sections || []).map(s =>
+    `<div class="section">${s.label ? `<div class="slabel">${esc(s.label)}</div>` : ""}<div class="sbody">${esc(s.body)}</div></div>`
+  ).join("");
+  els.result.innerHTML =
+    (data.headline ? `<div class="headline">${esc(data.headline)}</div>` : "") +
+    sections +
+    (data.takeaway ? `<div class="takeaway">${esc(data.takeaway)}</div>` : "") +
+    (data.disclaimer ? `<div class="disclaimer">${esc(data.disclaimer)}</div>` : "");
+}
+
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>

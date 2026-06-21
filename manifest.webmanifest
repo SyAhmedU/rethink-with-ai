@@ -1,0 +1,14 @@
+{
+  "name": "Rethink with AI",
+  "short_name": "Rethink",
+  "description": "Hand a thought to AI and see it differently — reframe, challenge, other perspectives, or sharpen.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#f7f4fb",
+  "theme_color": "#9270F4",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

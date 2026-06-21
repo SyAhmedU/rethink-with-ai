@@ -1,0 +1,10 @@
+{
+  "name": "rethink-with-ai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hand a thought to AI and see it differently — reframe, challenge, other perspectives, or sharpen.",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}
