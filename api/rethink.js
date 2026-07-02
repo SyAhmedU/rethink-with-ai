@@ -71,19 +71,36 @@ export default async function handler(req, res) {
   const text = String(body.text || "").trim();
   const modeKey = String(body.mode || "reframe").toLowerCase();
   const mode = MODES[modeKey] || MODES.reframe;
+  const followup = String(body.followup || "").trim().slice(0, 500);
+  const prior = String(body.prior || "").trim().slice(0, 4000);
 
   if (!text) { res.status(400).json({ error: "EMPTY", message: "Write a thought first." }); return; }
   if (text.length > 6000) { res.status(413).json({ error: "TOO_LONG", message: "That's a lot at once — try a shorter passage (under ~6000 characters)." }); return; }
 
-  const system =
-    SAFETY + "\n\n" + mode.instruction + "\n\n" +
-    "Respond with ONLY a JSON object of this exact shape:\n" +
-    '{ "headline": "<one warm sentence naming what you did>", ' +
-    '"sections": [ { "label": "<section label>", "body": "<a few sentences; use \\n line breaks for short lists>" } ], ' +
-    '"takeaway": "<one closing line to leave them with>" }\n' +
-    "Keep the whole response readable in under ~350 words. Use the exact section labels described above.";
-
-  const user = "Here is what I wrote:\n\n" + text;
+  let system, user;
+  if (followup) {
+    // One guarded follow-up exchange: grounded ONLY in their text + the prior reflection.
+    system =
+      SAFETY + "\n\n" +
+      "The person already received your '" + mode.title + "' reflection on their thought and now asks ONE follow-up question. " +
+      "Answer it in under 150 words, grounded ONLY in their original text and your prior reflection — introduce no new facts about them or their life. " +
+      "If the question needs information you don't have, say so plainly.\n\n" +
+      "Respond with ONLY a JSON object of this exact shape:\n" +
+      '{ "headline": "", "sections": [ { "label": "Follow-up", "body": "<your answer>" } ], "takeaway": "<one closing line>" }';
+    user =
+      "My original thought:\n\n" + text +
+      (prior ? "\n\nYour prior reflection:\n" + prior : "") +
+      "\n\nMy follow-up question: " + followup;
+  } else {
+    system =
+      SAFETY + "\n\n" + mode.instruction + "\n\n" +
+      "Respond with ONLY a JSON object of this exact shape:\n" +
+      '{ "headline": "<one warm sentence naming what you did>", ' +
+      '"sections": [ { "label": "<section label>", "body": "<a few sentences; use \\n line breaks for short lists>" } ], ' +
+      '"takeaway": "<one closing line to leave them with>" }\n' +
+      "Keep the whole response readable in under ~350 words. Use the exact section labels described above.";
+    user = "Here is what I wrote:\n\n" + text;
+  }
 
   try {
     const data = await callGroq(PRIMARY, system, user).catch(() => callGroq(FALLBACK, system, user));
@@ -116,6 +133,15 @@ async function callGroq(model, system, user) {
   return { content: j.choices?.[0]?.message?.content || "", model };
 }
 
+// Brevity is enforced server-side too: ≤6 sections, each trimmed at a sentence
+// boundary near 1,200 chars — a reflection should stay readable, not sprawl.
+function trimBody(s) {
+  if (s.length <= 1200) return s;
+  const cut = s.slice(0, 1200);
+  const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("\n"));
+  return (end > 200 ? cut.slice(0, end + 1) : cut).trim() + " …";
+}
+
 function parse(raw) {
   let obj;
   try { obj = JSON.parse(raw); }
@@ -124,11 +150,13 @@ function parse(raw) {
     try { obj = JSON.parse(m ? m[0] : "{}"); } catch { obj = {}; }
   }
   const sections = Array.isArray(obj.sections)
-    ? obj.sections.filter(s => s && (s.label || s.body)).map(s => ({ label: String(s.label || "").trim(), body: String(s.body || "").trim() }))
+    ? obj.sections.filter(s => s && (s.label || s.body))
+        .slice(0, 6)
+        .map(s => ({ label: String(s.label || "").trim().slice(0, 60), body: trimBody(String(s.body || "").trim()) }))
     : [];
   return {
-    headline: String(obj.headline || "").trim() || "Here's another way to look at it.",
-    sections: sections.length ? sections : [{ label: "", body: String(raw || "").trim().slice(0, 1500) }],
-    takeaway: String(obj.takeaway || "").trim(),
+    headline: String(obj.headline || "").trim().slice(0, 220) || "Here's another way to look at it.",
+    sections: sections.length ? sections : [{ label: "", body: trimBody(String(raw || "").trim().slice(0, 1500)) }],
+    takeaway: String(obj.takeaway || "").trim().slice(0, 300),
   };
 }

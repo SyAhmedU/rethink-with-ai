@@ -119,6 +119,35 @@
 
   .privacy { font-size:11.5px; color:var(--faint); text-align:center; margin-top:30px; line-height:1.6; }
 
+  /* ── 2026-07 pass: takeaway-first collapsibles · follow-up · rating ·
+       save-to-thoughts · crisis line · voice · cooldown ── */
+  .section .shead{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:0;padding:0;margin:0;color:inherit;text-align:left;cursor:pointer;}
+  .section .sbody{display:none;margin-top:6px;}
+  .section.open .sbody, .section.nolabel .sbody{display:block;}
+  .section .chev{color:var(--faint);transition:transform .15s;}
+  .section.open .chev{transform:rotate(180deg);}
+  .expand-all{background:none;border:0;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:3px;margin:2px 0 8px;}
+  .expand-all:hover{color:var(--accent);}
+  .fu{display:flex;gap:8px;align-items:center;margin:14px 0 4px;flex-wrap:wrap;}
+  .fu input{flex:1 1 220px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:9px 12px;font-size:14px;outline:none;color:inherit;font-family:inherit;}
+  .fu input:focus{border-color:var(--accent);}
+  .fu button{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600;}
+  .fu button:hover{color:var(--ink);border-color:var(--accent);}
+  .fu button:disabled{opacity:.5;}
+  .fu-note{font-size:11px;color:var(--faint);flex-basis:100%;}
+  .fu-a{background:var(--accent-soft);border:1px solid var(--line2);border-radius:12px;padding:12px 15px;margin:10px 0;font-size:14.5px;line-height:1.6;white-space:pre-wrap;}
+  .fu-a .fq{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;}
+  .rate{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--faint);margin:14px 0 0;}
+  .rate .rb{border:1px solid var(--line);background:var(--panel);border-radius:999px;width:32px;height:32px;font-size:14px;}
+  .rate .rb:hover{border-color:var(--accent);}
+  .save-row{margin-top:12px;}
+  .save-mt{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:500;}
+  .save-mt:hover{color:var(--ink);border-color:var(--accent);}
+  .crisis{font-size:12px;color:var(--muted);background:var(--accent-soft);border:1px solid var(--line2);border-radius:10px;padding:10px 13px;margin-top:12px;line-height:1.6;}
+  .mic{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;width:34px;height:34px;font-size:15px;}
+  .mic.rec{border-color:var(--accent2);color:var(--accent2);box-shadow:0 0 0 3px rgba(194,68,122,.15);animation:pulse 1.3s ease-in-out infinite;}
+  .offline-note{font-size:12px;color:var(--faint);margin-bottom:10px;}
+
   @media (max-width:560px) {
     header h1 { font-size:22px; }
     .home-link { padding:6px 9px; }
@@ -168,6 +197,7 @@ mk();if(document.readyState==="loading")document.addEventListener("DOMContentLoa
       <div class="composer-bar">
         <span class="count" id="count">0 characters</span>
         <span class="spacer"></span>
+        <button class="mic" id="micBtn" title="Speak your thought — on-device speech recognition, nothing recorded" style="display:none" aria-label="Dictate">🎙</button>
       </div>
     </div>
 
@@ -217,6 +247,48 @@ let busy = false;
 
 els.home.href = MY_THOUGHTS_URL;
 
+// ── On-device lens preference: usage + 👍/👎 reorder the lens row ──
+function readJson(k) { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch { return {}; } }
+function writeJson(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function lensScore(m) {
+  const use = readJson("rethink_lens_use"), fb = readJson("rethink_lens_fb");
+  const f = fb[m] || {};
+  return (use[m] || 0) + 2 * (f.up || 0) - (f.down || 0);
+}
+function orderLenses() {
+  const btns = [...els.lenses.children];
+  if (btns.every(b => lensScore(b.dataset.mode) === 0)) return;
+  btns.map(b => ({ b, s: lensScore(b.dataset.mode) }))
+    .sort((a, b) => b.s - a.s)
+    .forEach(x => els.lenses.appendChild(x.b));
+}
+orderLenses();
+
+// ── Voice input (on-device SpeechRecognition; hidden when unsupported) ──
+(function () {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = $("micBtn");
+  if (!SR || !btn) return;
+  btn.style.display = "";
+  let rec = null;
+  btn.addEventListener("click", () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SR();
+    rec.lang = "en-IN"; rec.continuous = true; rec.interimResults = false;
+    rec.onresult = ev => {
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        if (ev.results[i].isFinal) {
+          els.text.value = (els.text.value.trim() + " " + ev.results[i][0].transcript.trim()).trim();
+          updateCount();
+        }
+      }
+    };
+    rec.onend = () => { rec = null; btn.classList.remove("rec"); };
+    rec.onerror = () => { rec = null; btn.classList.remove("rec"); };
+    try { rec.start(); btn.classList.add("rec"); } catch { rec = null; }
+  });
+})();
+
 // ── Prefill from My Thoughts (?t=base64url JSON {t,title}) ──
 (function prefill() {
   const p = new URLSearchParams(location.search).get("t");
@@ -264,16 +336,48 @@ async function run(m) {
       body: JSON.stringify({ text, mode: m }),
     });
     const data = await r.json();
+    if (r.status === 429) { setTimeout(() => cooldown(60), 0); return; }
     if (!r.ok) { showError(data.message || "Something went wrong."); return; }
+    const use = readJson("rethink_lens_use"); use[m] = (use[m] || 0) + 1; writeJson("rethink_lens_use", use);
     cacheText = text;
     cache[m] = data;
     renderTabs();
     renderResult(data);
   } catch {
-    showError("Couldn't reach the AI engine. Check your connection and try again.");
+    showOfflineFallback(m);
   } finally {
     busy = false; els.run.disabled = false; els.runAll.disabled = false;
   }
+}
+
+// Friendly cooldown when the shared engine rate-limits.
+function cooldown(sec) {
+  els.run.disabled = true; els.runAll.disabled = true;
+  let left = sec;
+  (function tick() {
+    if (left <= 0) {
+      els.run.disabled = false; els.runAll.disabled = false;
+      els.result.innerHTML = `<div class="placeholder"><div class="pm">Ready when you are.</div></div>`;
+      return;
+    }
+    els.result.innerHTML = `<div class="errbox">Taking a breather — the shared AI engine is rate-limited right now. Try again in <b>${left}s</b>. Your thought is still here.</div>`;
+    left--; setTimeout(tick, 1000);
+  })();
+}
+
+// Offline: pen-and-paper prompts for the chosen lens — static, clearly not AI.
+const OFFLINE = {
+  reframe: ["What would you say to a friend who wrote this?", "Which part of this is fact, and which part is interpretation?", "What's one gentler way to read the same situation?"],
+  challenge: ["What's the strongest argument against this?", "What are you assuming that might not be true?", "Who would disagree — and what would they see that you don't?"],
+  perspectives: ["How would a mentor you respect read this?", "What will you think of this a year from now?", "What's the most practical, unemotional read of it?"],
+  sharpen: ["What are you really saying, in one sentence?", "What's the single thing that matters most here?", "What's the smallest next step you could take today?"],
+};
+function showOfflineFallback(m) {
+  const qs = OFFLINE[m] || OFFLINE.reframe;
+  els.result.innerHTML =
+    `<div class="offline-note">Couldn't reach the AI engine — so here are pen-and-paper prompts for this lens instead (static, not AI).</div>` +
+    qs.map((q, i) => `<div class="section nolabel open"><div class="sbody">${i + 1}. ${esc(q)}</div></div>`).join("") +
+    crisisHTML();
 }
 
 async function runAll() {
@@ -313,15 +417,90 @@ function showError(msg) {
   els.result.innerHTML = `<div class="errbox">${esc(msg)}</div>`;
 }
 
+// Takeaway-first, sections collapsible (first open), then follow-up / rating /
+// save-back / crisis resources.
 function renderResult(data) {
-  const sections = (data.sections || []).map(s =>
-    `<div class="section">${s.label ? `<div class="slabel">${esc(s.label)}</div>` : ""}<div class="sbody">${esc(s.body)}</div></div>`
-  ).join("");
+  const m = data.mode || mode;
+  const secs = data.sections || [];
+  const labeled = secs.filter(s => s.label).length;
   els.result.innerHTML =
     (data.headline ? `<div class="headline">${esc(data.headline)}</div>` : "") +
-    sections +
     (data.takeaway ? `<div class="takeaway">${esc(data.takeaway)}</div>` : "") +
-    (data.disclaimer ? `<div class="disclaimer">${esc(data.disclaimer)}</div>` : "");
+    secs.map((s, i) => `
+      <div class="section${i === 0 ? " open" : ""}${s.label ? "" : " nolabel"}">
+        ${s.label ? `<button class="shead" data-sec="${i}" aria-expanded="${i === 0}"><span class="slabel">${esc(s.label)}</span><span class="chev">▾</span></button>` : ""}
+        <div class="sbody">${esc(s.body)}</div>
+      </div>`).join("") +
+    (labeled > 1 ? `<button class="expand-all" id="expandAll">Expand all</button>` : "") +
+    (data._fu ? `<div class="fu-a"><div class="fq">You asked: ${esc(data._fu.q)}</div>${esc(data._fu.body)}${data._fu.takeaway ? "\n\n" + esc(data._fu.takeaway) : ""}</div>` : "") +
+    (!data._fuUsed ? `<div class="fu"><input id="fuIn" maxlength="300" placeholder="One follow-up question about this reflection…" /><button id="fuBtn">Ask</button><span class="fu-note">One follow-up per lens — this stays a thinking aid, not a chat.</span></div>` : "") +
+    `<div class="rate" id="rateRow"><span>Was this lens useful?</span><button class="rb" data-rate="up" aria-label="Helpful">👍</button><button class="rb" data-rate="down" aria-label="Not helpful">👎</button></div>` +
+    `<div class="save-row"><button class="save-mt" id="saveMt">💾 Save this rethink to My Thoughts</button></div>` +
+    (data.disclaimer ? `<div class="disclaimer">${esc(data.disclaimer)}</div>` : "") +
+    crisisHTML();
+  wireResult(data, m);
+}
+
+function crisisHTML() {
+  return `<div class="crisis">If things feel heavy right now (India): <b>Tele-MANAS 14416</b> (24×7, free, Govt. of India) · <b>KIRAN 1800-599-0019</b> · <b>AASRA +91-98204 66726</b>. A real person beats any app.</div>`;
+}
+
+function wireResult(data, m) {
+  els.result.querySelectorAll(".shead").forEach(h => h.addEventListener("click", () => {
+    const sec = h.closest(".section");
+    const open = sec.classList.toggle("open");
+    h.setAttribute("aria-expanded", String(open));
+  }));
+  $("expandAll")?.addEventListener("click", () => {
+    els.result.querySelectorAll(".section").forEach(s => s.classList.add("open"));
+    $("expandAll").remove();
+  });
+  $("fuBtn")?.addEventListener("click", () => askFollowup(data, m));
+  $("fuIn")?.addEventListener("keydown", ev => { if (ev.key === "Enter") askFollowup(data, m); });
+  $("rateRow")?.addEventListener("click", ev => {
+    const b = ev.target.closest("[data-rate]"); if (!b) return;
+    const fb = readJson("rethink_lens_fb");
+    fb[m] = fb[m] || {};
+    fb[m][b.dataset.rate] = (fb[m][b.dataset.rate] || 0) + 1;
+    writeJson("rethink_lens_fb", fb);
+    $("rateRow").innerHTML = `<span>Noted — thanks. This stays on your device and just reorders the lenses.</span>`;
+  });
+  $("saveMt")?.addEventListener("click", () => saveToMyThoughts(data, m));
+}
+
+// One guarded follow-up per lens, grounded only in the original text + prior reflection.
+async function askFollowup(data, m) {
+  const q = ($("fuIn")?.value || "").trim();
+  if (!q) return;
+  const btn = $("fuBtn"); if (btn) { btn.disabled = true; btn.textContent = "…"; }
+  const prior = ((data.headline || "") + "\n" + (data.sections || []).map(s => (s.label ? s.label + ": " : "") + s.body).join("\n")).slice(0, 3800);
+  try {
+    const r = await fetch("/api/rethink", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: els.text.value.trim(), mode: m, followup: q, prior }),
+    });
+    const d = await r.json();
+    if (!r.ok) { showError(d.message || "Something went wrong."); return; }
+    data._fuUsed = true;
+    data._fu = { q, body: (d.sections && d.sections[0] && d.sections[0].body) || "", takeaway: d.takeaway || "" };
+    renderResult(data);
+  } catch {
+    if (btn) { btn.disabled = false; btn.textContent = "Ask"; }
+    showError("Couldn't reach the AI engine for the follow-up.");
+  }
+}
+
+// Round-trip: save the thought + reflection into My Thoughts via its share intake.
+function saveToMyThoughts(data, m) {
+  const orig = els.text.value.trim();
+  const bodyTxt = orig + "\n\n— Rethink (" + (MODE_LABEL[m] || m) + ") —\n" +
+    (data.headline ? data.headline + "\n\n" : "") +
+    (data.sections || []).map(s => (s.label ? s.label + ":\n" : "") + s.body).join("\n\n") +
+    (data.takeaway ? "\n\nTakeaway: " + data.takeaway : "") +
+    (data._fu ? "\n\nFollow-up (" + data._fu.q + "): " + data._fu.body : "");
+  const title = "Rethink · " + (orig.split(/\n/)[0].slice(0, 60) || "thought");
+  window.open(MY_THOUGHTS_URL + "?title=" + encodeURIComponent(title) + "&text=" + encodeURIComponent(bodyTxt.slice(0, 6000)), "_blank", "noopener");
 }
 
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
