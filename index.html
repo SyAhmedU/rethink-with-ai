@@ -153,6 +153,99 @@
     .home-link { padding:6px 9px; }
     .lens { flex:1; justify-content:center; }
   }
+  /* ── SYED-WAVE8 · "the prism" — bespoke elevation (hand-written) ── */
+  body { position:relative; }
+  body::before { /* grain */
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+    opacity:.03; mix-blend-mode:multiply;
+  }
+  body::after { /* refracted light wash */
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(46% 38% at 18% 0%, rgba(255,150,86,.08), transparent 70%),
+      radial-gradient(50% 42% at 88% 10%, rgba(146,112,244,.09), transparent 70%),
+      radial-gradient(40% 34% at 60% 100%, rgba(34,211,238,.05), transparent 70%);
+  }
+  @media (prefers-color-scheme: dark){
+    body::before { opacity:.045; mix-blend-mode:soft-light; }
+    body::after { background:
+      radial-gradient(46% 38% at 18% 0%, rgba(255,150,86,.10), transparent 70%),
+      radial-gradient(50% 42% at 88% 10%, rgba(146,112,244,.13), transparent 70%),
+      radial-gradient(40% 34% at 60% 100%, rgba(34,211,238,.07), transparent 70%); }
+  }
+  ::selection { background:rgba(146,112,244,.25); }
+  textarea#text, .fu input { caret-color:var(--accent); }
+
+  /* living gradient ink on the title */
+  header h1 {
+    background:linear-gradient(100deg, var(--fire1), var(--fire2) 40%, var(--fire3) 75%, var(--fire1));
+    background-size:280% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:sw8-ink 16s linear infinite;
+  }
+  @keyframes sw8-ink { to { background-position:-280% 0; } }
+
+  /* the spectrum beam — one thought splits into four lenses */
+  .composer { position:relative; overflow:hidden; }
+  .composer::before {
+    content:""; position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg,
+      #FF9656 0 25%, #F14575 25% 50%, #9270F4 50% 75%, #22d3ee 75% 100%);
+    opacity:.85;
+  }
+
+  /* each lens carries its own refraction */
+  .lens { --lh:var(--accent); }
+  .lens[data-mode="reframe"]      { --lh:#e07a3a; }
+  .lens[data-mode="challenge"]    { --lh:#F14575; }
+  .lens[data-mode="perspectives"] { --lh:#9270F4; }
+  .lens[data-mode="sharpen"]      { --lh:#0ea5c4; }
+  @media (prefers-color-scheme: dark){
+    .lens[data-mode="reframe"] { --lh:#FF9656; }
+    .lens[data-mode="sharpen"] { --lh:#22d3ee; }
+    .lens[data-mode="sharpen"].on, .lens[data-mode="reframe"].on { color:#171320; }
+  }
+  .lens:hover { border-color:var(--lh); color:var(--ink); }
+  .lens.on {
+    background:var(--lh); border-color:var(--lh);
+    box-shadow:0 4px 14px color-mix(in srgb, var(--lh) 38%, transparent);
+  }
+
+  /* results assemble one thought at a time */
+  .result .headline { animation:sw8-rise .5s cubic-bezier(.2,.7,.2,1) both; }
+  .result .section { animation:sw8-rise .5s cubic-bezier(.2,.7,.2,1) both; }
+  .result .section:nth-of-type(2){animation-delay:.06s} .result .section:nth-of-type(3){animation-delay:.12s}
+  .result .section:nth-of-type(4){animation-delay:.18s} .result .section:nth-of-type(5){animation-delay:.24s}
+  .result .takeaway {
+    animation:sw8-rise .55s cubic-bezier(.2,.7,.2,1) .28s both;
+    border-left:0; padding-left:18px; position:relative;
+  }
+  .result .takeaway::before {
+    content:""; position:absolute; left:0; top:0; bottom:0; width:3px; border-radius:3px;
+    background:linear-gradient(180deg, var(--fire1), var(--fire2) 55%, var(--fire3));
+  }
+  .skeleton .section { animation:pulse 1.3s ease-in-out infinite; }
+  @keyframes sw8-rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+
+  /* sheen sweep across the run CTA */
+  .run { position:relative; overflow:hidden; }
+  .run::after {
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(105deg, transparent 38%, rgba(255,255,255,.32) 50%, transparent 62%);
+    transform:translateX(-120%);
+  }
+  .run:hover::after { animation:sw8-sheen .8s ease; }
+  @keyframes sw8-sheen { to { transform:translateX(120%); } }
+
+  /* gate-aware entrance */
+  body.enter header        { animation:sw8-rise .55s cubic-bezier(.2,.7,.2,1) both; }
+  body.enter .composer     { animation:sw8-rise .55s cubic-bezier(.2,.7,.2,1) .10s both; }
+  body.enter .lenses       { animation:sw8-rise .55s cubic-bezier(.2,.7,.2,1) .18s both; }
+  body.enter .run-row      { animation:sw8-rise .55s cubic-bezier(.2,.7,.2,1) .26s both; }
+  body.enter .rtabs, body.enter .result { animation:sw8-rise .6s cubic-bezier(.2,.7,.2,1) .34s both; }
+  @media print { body::before, body::after { display:none; } }
+  /* ── /SYED-WAVE8 ── */
+
   @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
 </style>
 <!-- SYED-GATE · entry password, re-locks every load · injected by research-suite/tools/gate/inject.mjs -->
@@ -508,6 +601,19 @@ function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
+
+// SYED-WAVE8 · entrance plays after the gate unlocks, not behind it
+(function () {
+  function play() {
+    document.body.classList.add("enter");
+    setTimeout(() => document.body.classList.remove("enter"), 1800);
+  }
+  const gate = document.getElementById("syed-gate");
+  if (!gate) { play(); return; }
+  new MutationObserver((_, obs) => {
+    if (!document.getElementById("syed-gate")) { obs.disconnect(); play(); }
+  }).observe(document.body, { childList: true });
+})();
 </script>
 </body>
 </html>
