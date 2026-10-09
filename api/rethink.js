@@ -3,8 +3,8 @@
 // Modes: reframe | challenge | perspectives | sharpen
 import { guard } from "./_guard.js";
 
-const PRIMARY = process.env.RETHINK_MODEL || "llama-3.3-70b-versatile";
-const FALLBACK = "llama-3.1-8b-instant";
+const PRIMARY = process.env.RETHINK_MODEL || "openai/gpt-oss-120b";
+const FALLBACK = "openai/gpt-oss-20b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const SAFETY =
@@ -123,7 +123,7 @@ async function callGroq(model, system, user) {
     body: JSON.stringify({
       model,
       temperature: 0.65,
-      max_tokens: 1100,
+      reasoning_effort: 'low', max_tokens: 1100,
       response_format: { type: "json_object" },
       messages: [{ role: "system", content: system }, { role: "user", content: user }],
     }),
