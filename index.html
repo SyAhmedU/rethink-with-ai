@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html data-product-design="2026" lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -271,6 +271,7 @@ function mk(){
 mk();if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mk);
 })();</script>
 <!-- /SYED-GATE -->
+<link rel="stylesheet" href="product-design.css?v=20261017t">
 </head>
 <body>
   <div class="wrap">
@@ -286,7 +287,7 @@ mk();if(document.readyState==="loading")document.addEventListener("DOMContentLoa
     <div class="from-note" id="fromNote"></div>
 
     <div class="composer">
-      <textarea id="text" placeholder="What's on your mind? A worry, an idea, an opinion, a decision you're chewing on…"></textarea>
+      <textarea id="text" aria-label="Thought to reflect on" placeholder="What's on your mind? A worry, an idea, an opinion, a decision you're chewing on…"></textarea>
       <div class="composer-bar">
         <span class="count" id="count">0 characters</span>
         <span class="spacer"></span>
@@ -526,7 +527,7 @@ function renderResult(data) {
       </div>`).join("") +
     (labeled > 1 ? `<button class="expand-all" id="expandAll">Expand all</button>` : "") +
     (data._fu ? `<div class="fu-a"><div class="fq">You asked: ${esc(data._fu.q)}</div>${esc(data._fu.body)}${data._fu.takeaway ? "\n\n" + esc(data._fu.takeaway) : ""}</div>` : "") +
-    (!data._fuUsed ? `<div class="fu"><input id="fuIn" maxlength="300" placeholder="One follow-up question about this reflection…" /><button id="fuBtn">Ask</button><span class="fu-note">One follow-up per lens — this stays a thinking aid, not a chat.</span></div>` : "") +
+    (!data._fuUsed ? `<div class="fu"><input id="fuIn" aria-label="Follow-up question" maxlength="300" placeholder="One follow-up question about this reflection…" /><button id="fuBtn">Ask</button><span class="fu-note">One follow-up per lens — this stays a thinking aid, not a chat.</span></div>` : "") +
     `<div class="rate" id="rateRow"><span>Was this lens useful?</span><button class="rb" data-rate="up" aria-label="Helpful">👍</button><button class="rb" data-rate="down" aria-label="Not helpful">👎</button></div>` +
     `<div class="save-row"><button class="save-mt" id="saveMt">💾 Save this rethink to My Thoughts</button></div>` +
     (data.disclaimer ? `<div class="disclaimer">${esc(data.disclaimer)}</div>` : "") +
